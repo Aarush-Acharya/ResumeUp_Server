@@ -30,7 +30,7 @@ def create():
     return  jsonify({"Status": "pushed successfully"})
 
 if __name__ == '__main__':
-    app.run(debug=True, port=os.getenv("PORT", default=5678))
+    app.run(debug=True, port=os.getenv("PORT", default=5666))
 
 
 
