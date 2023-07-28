@@ -34,9 +34,10 @@ def create():
     cnx.commit()
     return  jsonify({"Status": "pushed successfully"})
 
-@app.route('/getChart', methods=['Get'])
+@app.route('/getChart', methods=['POST'])
 def getChart():
-    url = "https://github-contributions-api.deno.dev/Aarush-Acharya.svg?no-total=true&no-legend=true&frame=FFBF00"
+    body = request.json
+    url = "https://github-contributions-api.deno.dev/{}.svg?no-total=true&no-legend=true&frame=FFBF00".format(body['Uname'])
     payload = {}
     headers = {}
     response = requests.request("GET", url, headers=headers, data=payload)
