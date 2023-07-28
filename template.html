@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>{{ widgets.base_info.name }}'s Resume</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name"description" content="Generated using ResumUp">
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <main class="bg-black text-white flex flex-col min-h-screen justify-between items-center p-8 space-y-8">
+      <!-- Top row -->
+      <div class="flex flex-col md:flex-row gap-8 items-center h-full">
+        {% if widgets.avatar %}
+          <img class="w-48 h-48 rounded-full border-[#4BD0EE] border-8" src="{{ widgets.avatar.url }}" />
+        {% endif %}
+
+        <div class="border-2 border-[#29281F] rounded-md min-w-[50vw] p-8 flex flex-col gap-8 justify-between h-full">
+            <h2 class="text-3xl">{{ widgets.base_info.name }}</h2>
+
+            <p class="text-white/50">{{ widgets.base_info.description }}</p>
+        </div>
+      </div>
+
+      <!-- Middle row -->
+      <div class="flex justify-evenly flex-col md:flex-row items-center md:items-stretch md:space-x-4">
+        {% if widgets.github_activity is defined %}
+          <div class="rounded-lg py-4 px-12 bg-[#83CD1B] flex flex-col justify-around w-full">
+            <h2 class="text-lg italic font-medium self-center mb-4">Github Activity</h2>
+
+            <div>
+              <p>Created 10 commits</p>
+              <p>Created 1 new repository</p>
+              <p>Opened 5 new issues</p>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if widgets.vercel is defined %}
+        <div class="rounded-lg py-4 px-12 bg-[#14E0AD] flex flex-col justify-around w-full">
+          <h2 class="text-lg italic font-medium self-center mb-4 h-full">Vercel Projects</h2>
+
+          <div>
+            <p>Project 1</p>
+            <p>Project 2</p>
+            <p>Project 3</p>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if widgets.contactme is defined %}
+          <div class="rounded-lg py-4 px-12 bg-[#E038E4] flex flex-col justify-around w-full">
+            <h2 class="text-lg italic font-medium self-center mb-4">Let's Connect</h2>
+      
+            {% set contactme = widgets.contactme %}
+
+            <div>
+              <p>Email: {{ contactme.email_address }}</p>
+              <p>Linkedin: {{ contactme.linkedin_username }}</p>
+              <p>Github: {{ contactme.github_username }}</p>
+              <p>Twitter: {{ contactme.twitter_username }}</p>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if widgets.github_chart is defined %}
+        <div class="flex flex-col border-4 border-white/40 rounded-lg p-24 w-full justify-center items-center">
+          github heatmap
+        </div>
+      {% endif %}
+    </main>
+  </body>
+</html>

@@ -1,8 +1,11 @@
 from flask import Flask, jsonify, request
-import os
 from flask_cors import  CORS
+from jinja2 import Template
+
+import os
 import mysql.connector
 
+cnx = mysql.connector.connect(host ="gateway01.eu-central-1.prod.aws.tidbcloud.com",user ="Pd5yfUT23Tzbine.root",password ="8fIdoyXs7zyI7bjL",   port="4000",  database="ResumeUp", connect_timeout=60)
 
 app = Flask(__name__)
 CORS(app, origins=["*"])
@@ -14,31 +17,59 @@ def index():
 @app.route('/getToken', methods=['POST'])
 def get():
     body = request.json
-    cnx = mysql.connector.connect(host ="gateway01.eu-central-1.prod.aws.tidbcloud.com",user ="Pd5yfUT23Tzbine.root",password ="8fIdoyXs7zyI7bjL",   port="4000",  database="ResumeUp", connect_timeout=60)
     cursor = cnx.cursor()
     cursor.execute(
             "Select VercelAuthToken FROM VercelAuthTokens Where Uid = '{}';".format(body['Uid']))
     for i in cursor:
-        VercelToken = i[0]
-    return  jsonify({"VercelToken": VercelToken})
+        vercel_token = i[0]
+    return  jsonify({"VercelToken": vercel_token})
+
 @app.route('/putToken', methods=['POST'])
 def create():
     body = request.json
-    cnx = mysql.connector.connect(host ="gateway01.eu-central-1.prod.aws.tidbcloud.com",user ="Pd5yfUT23Tzbine.root",password ="8fIdoyXs7zyI7bjL",   port="4000",  database="ResumeUp", connect_timeout=60)
     cursor = cnx.cursor()
     cursor.execute(
             "INSERT INTO VercelAuthTokens(UID, VercelAuthToken) VALUES('{}','{}');".format(body['Uid'], body['VercelToken']))
     cnx.commit()
     return  jsonify({"Status": "pushed successfully"})
 
+@app.route("/deploy")
+def deploy():
+    # body = request.json
+
+    body = {
+      "widgets": {
+        "base_info": {
+            "name": "Syed Ahkam",
+            "description": "Some description"
+        },
+        "avatar": {
+            "url": "https://avatars.githubusercontent.com/u/52673095?v=4"
+        },
+        "github_activity": {},
+        "vercel": {},
+        "contactme": {
+            "email": "email@email.com",
+            "github_unme": "github_username",
+            "twitter_unme": "twitter_username",
+            "linkedIn_unme": "linkedin_username",
+        },
+        "github_chart": {},
+      },
+      "connections": {
+        "github_access_token": "github_token",
+        "vercel_auth_token": "vercel_token"
+      }
+    }
+
+    template_file = open("template.html")
+    template = Template(template_file.read())
+
+    rendered = template.render(**body)
+
+    return rendered
+
 if __name__ == '__main__':
     app.run(debug=True, port=os.getenv("PORT", default=5666))
-
-
-
-
-
-
-
 
 
