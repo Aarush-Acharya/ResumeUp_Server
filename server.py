@@ -40,7 +40,7 @@ def getChart():
     payload = {}
     headers = {}
     response = requests.request("GET", url, headers=headers, data=payload)
-    return  jsonify({"Status": response.content.decode('utf-8')})
+    return  jsonify({"Svg": response.content.decode('utf-8')})
 
 @app.route("/deploy")
 def deploy():
