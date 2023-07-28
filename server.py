@@ -3,8 +3,6 @@ import os
 from flask_cors import  CORS
 import mysql.connector
 
-cnx = mysql.connector.connect(host ="gateway01.eu-central-1.prod.aws.tidbcloud.com",user ="Pd5yfUT23Tzbine.root",password ="8fIdoyXs7zyI7bjL",   port="4000",  database="ResumeUp", connect_timeout=60)
-cursor = cnx.cursor()
 
 app = Flask(__name__)
 CORS(app, origins=["*"])
@@ -16,6 +14,8 @@ def index():
 @app.route('/getToken', methods=['POST'])
 def get():
     body = request.json
+    cnx = mysql.connector.connect(host ="gateway01.eu-central-1.prod.aws.tidbcloud.com",user ="Pd5yfUT23Tzbine.root",password ="8fIdoyXs7zyI7bjL",   port="4000",  database="ResumeUp", connect_timeout=60)
+    cursor = cnx.cursor()
     cursor.execute(
             "Select VercelAuthToken FROM VercelAuthTokens Where Uid = '{}';".format(body['Uid']))
     for i in cursor:
@@ -24,6 +24,8 @@ def get():
 @app.route('/putToken', methods=['POST'])
 def create():
     body = request.json
+    cnx = mysql.connector.connect(host ="gateway01.eu-central-1.prod.aws.tidbcloud.com",user ="Pd5yfUT23Tzbine.root",password ="8fIdoyXs7zyI7bjL",   port="4000",  database="ResumeUp", connect_timeout=60)
+    cursor = cnx.cursor()
     cursor.execute(
             "INSERT INTO VercelAuthTokens(UID, VercelAuthToken) VALUES('{}','{}');".format(body['Uid'], body['VercelToken']))
     cnx.commit()
