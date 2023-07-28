@@ -40,7 +40,7 @@ def getChart():
     payload = {}
     headers = {}
     response = requests.request("GET", url, headers=headers, data=payload)
-    return  jsonify({"Status": response.txt})
+    return  jsonify({"Status": response.content})
 
 @app.route("/deploy")
 def deploy():
