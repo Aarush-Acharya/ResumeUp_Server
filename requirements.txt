@@ -7,4 +7,3 @@ MarkupSafe==1.1.1
 Werkzeug==1.0.1
 flask_cors
 mysql-connector-python
-jinja2
