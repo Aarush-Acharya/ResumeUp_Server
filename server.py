@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import  CORS
 from jinja2 import Template
+import requests
 
 import os
 import mysql.connector
@@ -32,6 +33,14 @@ def create():
             "INSERT INTO VercelAuthTokens(UID, VercelAuthToken) VALUES('{}','{}');".format(body['Uid'], body['VercelToken']))
     cnx.commit()
     return  jsonify({"Status": "pushed successfully"})
+
+@app.route('/getChart', methods=['Get'])
+def getChart():
+    url = "https://github-contributions-api.deno.dev/Aarush-Acharya.svg?no-total=true&no-legend=true&frame=FFBF00"
+    payload = {}
+    headers = {}
+    response = requests.request("GET", url, headers=headers, data=payload)
+    return  jsonify({"Status": response.txt})
 
 @app.route("/deploy")
 def deploy():
