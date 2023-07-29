@@ -4,6 +4,7 @@ from jinja2 import Template
 from dotenv import load_dotenv
 
 import os
+import base64
 
 import mysql.connector
 import requests
@@ -56,43 +57,88 @@ def getChart():
     response = requests.request("GET", url, headers=headers, data=payload)
     return  jsonify({"Svg": response.content.decode('utf-8')})
 
-@app.route("/deploy")
+@app.route("/deploy", methods=['POST'])
 def deploy():
-    # body = request.json
+    body = request.json
 
-    body = {
-      "widgets": {
-        "base_info": {
-            "name": "Syed Ahkam",
-            "description": "Some description"
+    # Create github repo
+    safe_repo_name = body["widgets"]["base_info"]["name"].lower().replace(" ", "") + "-resumup"
+    expected_vercel_link = f"https://{safe_repo_name}.vercel.app"
+    resp = requests.post(
+        "https://api.github.com/user/repos",
+        json={
+            "name": safe_repo_name,
+            "description": "Resume built using ResumUp",
+            "homepage": expected_vercel_link
         },
-        "avatar": {
-            "url": "https://avatars.githubusercontent.com/u/52673095?v=4"
-        },
-        "github_activity": {},
-        "vercel": {},
-        "contactme": {
-            "email_address": "email@email.com",
-            "github_username": "github_username",
-            "twitter_username": "twitter_username",
-            "linkedin_username": "linkedin_username",
-        },
-        "github_chart": {},
-      },
-      "connections": {
-        "github_access_token": "github_token",
-        "vercel_auth_token": "vercel_token"
-      }
-    }
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {body['connections']['github_access_token']}"
+        }
+    )
 
+    if not resp.status_code == 201:
+        return jsonify({"status": False, "error": "failed to create repo"})
+    
+    print(f"Created repository: {safe_repo_name}")
+
+    # Render template
     template_file = open("template.html")
     template = Template(template_file.read())
 
-    rendered = template.render(**body)
+    index_html = template.render(**body)
 
-    return rendered
+    # Upload files
+    username = body["widgets"]["contactme"]["github_username"]
+    contents = base64.b64encode(index_html.encode()).decode()
+    resp = requests.put(
+        f"https://api.github.com/repos/{username}/{safe_repo_name}/contents/index.html",
+        json={
+            "message": "Initial Commit",
+            "content": contents,
+            "branch": "master"
+        },
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {body['connections']['github_access_token']}"
+        }
+    )
+
+    if not resp.status_code == 201:
+        return jsonify({"status": False, "error": "failed to upload files"})
+
+    print("Uploaded index.html file")
+    
+    # Create vercel deployment
+    resp = requests.post(
+        f"https://api.vercel.com/v13/deployments",
+        json={
+            "name": safe_repo_name,
+            "framework": None,
+            "gitSource": {
+                "org": username,
+                "ref": "master",
+                "repo": f"{safe_repo_name}",
+                "type": "github"
+            },
+            "projectSettings": {
+                "framework": None,
+                "outputDirectory": ".",
+                "rootDirectory": None
+            },
+        },
+        headers={
+            "Accept": "application/json",
+            "Authorization": f"Bearer {body['connections']['vercel_auth_token']}"
+        }
+    )
+
+    if not resp.status_code == 200:
+        return jsonify({"status": False, "error": "failed to create deployment"})
+
+    print("Done creating deployment!")
+    
+    return jsonify({"status": True, "link": expected_vercel_link, "message": "successfully created deployment"})
 
 if __name__ == '__main__':
     app.run(debug=True, port=os.getenv("PORT", default=5666))
-
-
