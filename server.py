@@ -26,6 +26,8 @@ cnx = mysql.connector.connect(
 def index():
     return jsonify({"Choo Choo": "Welcome to your Flask app 🚅"})
 
+
+
 @app.route('/getToken', methods=['POST'])
 def get():
     body = request.json
@@ -91,6 +93,30 @@ def deploy():
     rendered = template.render(**body)
 
     return rendered
+
+
+
+@app.route('/setStatus', methods=['POST'])
+def post_status():
+    cnx = mysql.connector.connect(host ="gateway01.eu-central-1.prod.aws.tidbcloud.com",user ="Pd5yfUT23Tzbine.root",password ="8fIdoyXs7zyI7bjL",   port="4000",  database="ResumeUp", connect_timeout=60)
+    body = request.json
+    cursor = cnx.cursor()
+    cursor.execute(
+            "INSERT INTO DeployStatus(UID, Status) VALUES('{}','{}');".format(body['Uid'], body['Status']))
+    cnx.commit()
+    return  jsonify({"Executed": "yep"})
+
+@app.route('/getStatus', methods=['POST'])
+def get_status():
+    cnx = mysql.connector.connect(host ="gateway01.eu-central-1.prod.aws.tidbcloud.com",user ="Pd5yfUT23Tzbine.root",password ="8fIdoyXs7zyI7bjL",   port="4000",  database="ResumeUp", connect_timeout=60)
+    body = request.json
+    cursor = cnx.cursor()
+    cursor.execute(
+            "Select Status FROM DeployStatus Where Uid = '{}';".format(body['Uid']))
+    for i in cursor:
+        status = i[0]
+    return  jsonify({"Status": status})
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=os.getenv("PORT", default=5666))
