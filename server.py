@@ -57,6 +57,25 @@ def getChart():
     response = requests.request("GET", url, headers=headers, data=payload)
     return  jsonify({"Svg": response.content.decode('utf-8')})
 
+@app.route('/setStatus', methods=['POST'])
+def post_status():
+    body = request.json
+    cursor = cnx.cursor()
+    cursor.execute(
+            "INSERT INTO DeployStatus(UID, Status) VALUES('{}','{}');".format(body['Uid'], body['Status']))
+    cnx.commit()
+    return  jsonify({"Executed": "yep"})
+
+@app.route('/getStatus', methods=['POST'])
+def get_status():
+    body = request.json
+    cursor = cnx.cursor()
+    cursor.execute(
+            "Select Status FROM DeployStatus Where Uid = '{}';".format(body['Uid']))
+    for i in cursor:
+        status = i[0]
+    return  jsonify({"Status": status})
+
 @app.route("/deploy", methods=['POST'])
 def deploy():
     body = request.json
