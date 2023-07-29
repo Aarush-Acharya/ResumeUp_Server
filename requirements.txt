@@ -8,3 +8,4 @@ Werkzeug==1.0.1
 flask_cors
 requests
 mysql-connector-python
+python-dotenv

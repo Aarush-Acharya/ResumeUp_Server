@@ -1,16 +1,26 @@
 from flask import Flask, jsonify, request
 from flask_cors import  CORS
 from jinja2 import Template
-import requests
+from dotenv import load_dotenv
 
 import os
+
 import mysql.connector
+import requests
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app, origins=["*"])
 
-
-cnx = mysql.connector.connect(host ="gateway01.eu-central-1.prod.aws.tidbcloud.com",user ="Pd5yfUT23Tzbine.root",password ="8fIdoyXs7zyI7bjL",   port="4000",  database="ResumeUp", connect_timeout=60)
+cnx = mysql.connector.connect(
+    host=os.getenv("DB_HOST"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASS"),
+    port=os.getenv("DB_PORT"),
+    database=os.getenv("DB_NAME"),
+    connect_timeout=60
+)
 
 @app.route('/')
 def index():
