@@ -155,7 +155,7 @@ def deploy():
 
     print("Done creating deployment!")
     
-    return jsonify({"status": True, "link": expected_vercel_link, "message": "successfully created deployment"})
+    return jsonify({"status": "True", "link": expected_vercel_link, "message": "successfully created deployment"})
 
 
 if __name__ == '__main__':
