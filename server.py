@@ -14,15 +14,6 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app, origins=["*"])
 
-cnx = mysql.connector.connect(
-    host=os.getenv("DB_HOST"),
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASS"),
-    port=os.getenv("DB_PORT"),
-    database=os.getenv("DB_NAME"),
-    connect_timeout=60
-)
-
 @app.route('/')
 def index():
     return jsonify({"Choo Choo": "Welcome to your Flask app 🚅"})
@@ -30,6 +21,14 @@ def index():
 @app.route('/getToken', methods=['POST'])
 def get():
     body = request.json
+    cnx = mysql.connector.connect(
+    host=os.getenv("DB_HOST"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASS"),
+    port=os.getenv("DB_PORT"),
+    database=os.getenv("DB_NAME"),
+    connect_timeout=60
+)
     cursor = cnx.cursor()
     cursor.execute(
             "Select VercelAuthToken FROM VercelAuthTokens Where Uid = '{}';".format(body['Uid']))
@@ -39,12 +38,21 @@ def get():
 
 @app.route('/putToken', methods=['POST'])
 def create():
+    cnx = mysql.connector.connect(
+    host=os.getenv("DB_HOST"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASS"),
+    port=os.getenv("DB_PORT"),
+    database=os.getenv("DB_NAME"),
+    connect_timeout=60
+)
     body = request.json
     cursor = cnx.cursor()
     cursor.execute(
             "INSERT INTO VercelAuthTokens(UID, VercelAuthToken) VALUES('{}','{}');".format(body['Uid'], body['VercelToken']))
     cnx.commit()
     return  jsonify({"Status": "pushed successfully"})
+
 
 @app.route('/getChart', methods=['POST'])
 def getChart():
@@ -57,6 +65,14 @@ def getChart():
 
 @app.route('/setStatus', methods=['POST'])
 def send_Status():
+    cnx = mysql.connector.connect(
+    host=os.getenv("DB_HOST"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASS"),
+    port=os.getenv("DB_PORT"),
+    database=os.getenv("DB_NAME"),
+    connect_timeout=60
+)
     body = request.json
     cursor = cnx.cursor()
     cursor.execute(
@@ -66,6 +82,14 @@ def send_Status():
 
 @app.route('/getStatus', methods=['POST'])
 def get_status():
+    cnx = mysql.connector.connect(
+    host=os.getenv("DB_HOST"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASS"),
+    port=os.getenv("DB_PORT"),
+    database=os.getenv("DB_NAME"),
+    connect_timeout=60
+)
     body = request.json
     cursor = cnx.cursor()
     cursor.execute(
@@ -155,7 +179,7 @@ def deploy():
 
     print("Done creating deployment!")
     
-    return jsonify({"status": "True", "link": expected_vercel_link, "message": "successfully created deployment"})
+    return jsonify({"status": True, "link": expected_vercel_link, "message": "successfully created deployment"})
 
 
 if __name__ == '__main__':
