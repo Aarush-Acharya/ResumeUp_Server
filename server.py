@@ -56,7 +56,7 @@ def getChart():
     return  jsonify({"Svg": response.content.decode('utf-8')})
 
 @app.route('/setStatus', methods=['POST'])
-def post_status():
+def send_Status():
     body = request.json
     cursor = cnx.cursor()
     cursor.execute(
