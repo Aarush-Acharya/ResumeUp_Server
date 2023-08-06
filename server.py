@@ -29,6 +29,7 @@ def index():
 @app.route('/getToken', methods=['POST'])
 def get():
     body = request.json
+    cnx.reconnect()
     cursor = cnx.cursor()
     cursor.execute(
             "Select VercelAuthToken FROM VercelAuthTokens Where Uid = '{}';".format(body['Uid']))
@@ -39,6 +40,7 @@ def get():
 @app.route('/putToken', methods=['POST'])
 def create():
     body = request.json
+    cnx.reconnect()
     cursor = cnx.cursor()
     cursor.execute(
             "INSERT INTO VercelAuthTokens(UID, VercelAuthToken) VALUES('{}','{}');".format(body['Uid'], body['VercelToken']))
@@ -58,6 +60,7 @@ def getChart():
 @app.route('/setStatus', methods=['POST'])
 def send_Status():
     body = request.json
+    cnx.reconnect()
     cursor = cnx.cursor()
     cursor.execute(
             "INSERT INTO DeployStatus(UID, Status) VALUES('{}','{}');".format(body['Uid'], body['Status']))
@@ -67,6 +70,7 @@ def send_Status():
 @app.route('/getStatus', methods=['POST'])
 def get_status():
     body = request.json
+    cnx.reconnect()
     cursor = cnx.cursor()
     cursor.execute(
             "Select Status FROM DeployStatus Where Uid = '{}';".format(body['Uid']))
