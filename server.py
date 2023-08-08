@@ -1,14 +1,17 @@
 from flask import Flask, jsonify, request
 from flask_cors import  CORS
-from jinja2 import Template
 from dotenv import load_dotenv
+from github import Github, Auth
+from cookiecutter.main import cookiecutter
+from git import Repo
 
 import os
-import base64
 import json
 
 import mysql.connector
 import requests
+
+TEMPLATE_REPO_LINK="https://github.com/TiDB-Hacks/resumeup_template"
 
 load_dotenv()
 
@@ -83,54 +86,57 @@ def get_status():
 def deploy():
     body = request.json
 
-    # Create github repo
+    # Create github instance
+    github = Github(auth=Auth.Token(body["connections"]["github_access_token"]))
+
     safe_repo_name = body["widgets"]["base_info"]["name"].lower().replace(" ", "") + "-resumup"
     expected_vercel_link = f"https://{safe_repo_name}.vercel.app"
-    resp = requests.post(
-        "https://api.github.com/user/repos",
-        json={
-            "name": safe_repo_name,
-            "description": "Resume built using ResumUp",
-            "homepage": expected_vercel_link
-        },
-        headers={
-            "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {body['connections']['github_access_token']}"
-        }
-    )
 
-    if not resp.status_code == 201:
-        return jsonify({"status": False, "error": "failed to create repo"})
+    # Remove existing output dir, if any
+    if os.path.exists("/tmp/" + safe_repo_name):
+        os.system(f"rm -rf /tmp/{safe_repo_name}")
+
+    username = body["widgets"]["contactme"]["github_username"]
+    access_token = body["connections"]["github_access_token"]
+
+    context = {
+        "project_name": safe_repo_name,
+        "author_name": body["widgets"]["base_info"]["name"],
+        "vercel_token": body["connections"]["vercel_auth_token"],
+        "github_token": body["connections"]["github_access_token"]
+    }
+    output_dir = cookiecutter(
+        TEMPLATE_REPO_LINK,
+        no_input=True,
+        extra_context=context,
+        output_dir="/tmp"
+    )
+    if not output_dir:
+        return jsonify({"status": False, "error": "failed to template"})
     
+    print(f"Templated successfully to {output_dir}")
+
+    # Create github repo
+    try: 
+        repo = github.get_user().create_repo(safe_repo_name, description="Resume built using ResumUp", homepage=expected_vercel_link)
+    except Exception as e:
+        print(e)
+        return jsonify({"status": False, "error": "failed to create repo"})
+    print(repo)
+
     print(f"Created repository: {safe_repo_name}")
 
-    # Render template
-    template_file = open("template.html")
-    template = Template(template_file.read())
-
-    index_html = template.render(**body)
-
     # Upload files
-    username = body["widgets"]["contactme"]["github_username"]
-    contents = base64.b64encode(index_html.encode()).decode()
-    resp = requests.put(
-        f"https://api.github.com/repos/{username}/{safe_repo_name}/contents/index.html",
-        json={
-            "message": "Initial Commit",
-            "content": contents,
-            "branch": "master"
-        },
-        headers={
-            "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {body['connections']['github_access_token']}"
-        }
-    )
-
-    if not resp.status_code == 201:
-        return jsonify({"status": False, "error": "failed to upload files"})
-
-    print("Uploaded index.html file")
+    local_repo = Repo.init(output_dir)
+    remote = local_repo.create_remote("origin", f"https://{username}:{access_token}@github.com/{username}/{safe_repo_name}")
     
+    local_repo.git.add(".")
+    local_repo.index.commit("Initial commit")
+    remote.push(refspec="master:master")
+    
+
+    print("Files uploaded successfully.")
+
     # Create vercel deployment
     env = json.dumps({
         VERCEL_AUTH_TOKEN: body['connections']['vercel_auth_token'],
@@ -150,8 +156,10 @@ def deploy():
             },
             "projectSettings": {
                 "framework": None,
-                "outputDirectory": ".",
-                "rootDirectory": None
+                "rootDirectory": None,
+                "buildCommand": "flutter/bin/flutter build web --release --no-tree-shake-icons",
+                "outputDirectory": "build/web",
+                "installCommand": "if cd flutter; then git pull && cd .. ; else git clone https://github.com/flutter/flutter.git; fi && ls && flutter/bin/flutter doctor && flutter/bin/flutter clean && flutter/bin/flutter config --enable-web"
             },
         },
 
@@ -165,7 +173,6 @@ def deploy():
         return jsonify({"status": False, "error": "failed to create deployment"})
 
     print("Done creating deployment!")
-    
     return jsonify({"status": True, "link": expected_vercel_link, "message": "successfully created deployment", "repo_name": safe_repo_name})
 
 
