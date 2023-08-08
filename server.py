@@ -139,8 +139,8 @@ def deploy():
 
     # Create vercel deployment
     env = json.dumps({
-        VERCEL_AUTH_TOKEN: body['connections']['vercel_auth_token'],
-        GITHUB_ACCESS_TOKEN: body['connections']['github_access_token']
+        "VERCEL_AUTH_TOKEN": body['connections']['vercel_auth_token'],
+        "GITHUB_ACCESS_TOKEN": body['connections']['github_access_token']
     })
     resp = requests.post(
         f"https://api.vercel.com/v13/deployments",
