@@ -79,7 +79,7 @@ def get_status():
     cursor.execute(
             "Select Status FROM DeployStatus Where Uid = '{}';".format(body['Uid']))
 
-    status = False
+    status = "false"
     for i in cursor:
         status = i[0]
     
