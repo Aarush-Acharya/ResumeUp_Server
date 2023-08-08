@@ -170,6 +170,7 @@ def deploy():
     )
 
     if not resp.status_code == 200:
+        print(resp.json())
         return jsonify({"status": False, "error": "failed to create deployment"})
 
     print("Done creating deployment!")
