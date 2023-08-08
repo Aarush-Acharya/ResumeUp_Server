@@ -78,8 +78,11 @@ def get_status():
     cursor = cnx.cursor()
     cursor.execute(
             "Select Status FROM DeployStatus Where Uid = '{}';".format(body['Uid']))
+
+    status = False
     for i in cursor:
         status = i[0]
+    
     return  jsonify({"Status": status})
 
 @app.route("/deploy", methods=['POST'])
