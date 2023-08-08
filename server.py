@@ -160,12 +160,10 @@ def deploy():
 
     print("Files uploaded successfully.")
 
-    vercel_headers = (
-        {
-            "Accept": "application/json",
-            "Authorization": f"Bearer {body['connections']['vercel_auth_token']}",
-        },
-    )
+    vercel_headers = {
+        "Accept": "application/json",
+        "Authorization": f"Bearer {body['connections']['vercel_auth_token']}",
+    }
 
     # Create vercel deployment
     resp = requests.post(
@@ -201,7 +199,7 @@ def deploy():
         return jsonify({"status": False, "error": "failed to create deployment"})
 
     print("Done creating deployment!")
-    
+
     parsed = resp.json()
     project_id = parsed["projectId"]
     resp = requests.post(
@@ -209,7 +207,7 @@ def deploy():
         json=[
             {
                 "key": "VERCEL_AUTH_TOKEN",
-                "value": body['connections']['vercel_auth_token'],
+                "value": body["connections"]["vercel_auth_token"],
                 "type": "plain",
                 "target": ["production", "preview"],
             },
@@ -222,11 +220,11 @@ def deploy():
         ],
         headers=vercel_headers,
     )
-    
+
     if not resp.status_code == 201:
         print(resp.json())
         return jsonify({"status": False, "error": "failed to add env variables"})
-    
+
     print("Added env variables")
 
     return jsonify(
