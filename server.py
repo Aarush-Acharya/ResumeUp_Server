@@ -104,8 +104,6 @@ def deploy():
     context = {
         "project_name": safe_repo_name,
         "author_name": body["widgets"]["base_info"]["name"],
-        "vercel_token": body["connections"]["vercel_auth_token"],
-        "github_token": body["connections"]["github_access_token"]
     }
     output_dir = cookiecutter(
         TEMPLATE_REPO_LINK,
@@ -145,9 +143,11 @@ def deploy():
         json={
             "name": safe_repo_name,
             "framework": None,
-            "env": {
-                "VERCEL_AUTH_TOKEN": body['connections']['vercel_auth_token'],
-                "GITHUB_ACCESS_TOKEN": body['connections']['github_access_token']
+            "build": {
+                "env": {
+                    "VERCEL_AUTH_TOKEN": body['connections']['vercel_auth_token'],
+                    "GITHUB_ACCESS_TOKEN": body['connections']['github_access_token']
+                },
             },
             "gitSource": {
                 "org": username,
