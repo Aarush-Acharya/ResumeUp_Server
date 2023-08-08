@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 import os
 import base64
+import json
 
 import mysql.connector
 import requests
@@ -131,11 +132,16 @@ def deploy():
     print("Uploaded index.html file")
     
     # Create vercel deployment
+    env = json.dumps({
+        VERCEL_AUTH_TOKEN: body['connections']['vercel_auth_token'],
+        GITHUB_ACCESS_TOKEN: body['connections']['github_access_token']
+    })
     resp = requests.post(
         f"https://api.vercel.com/v13/deployments",
         json={
             "name": safe_repo_name,
             "framework": None,
+            "env": env,
             "gitSource": {
                 "org": username,
                 "ref": "master",
@@ -148,6 +154,7 @@ def deploy():
                 "rootDirectory": None
             },
         },
+
         headers={
             "Accept": "application/json",
             "Authorization": f"Bearer {body['connections']['vercel_auth_token']}"
