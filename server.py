@@ -140,16 +140,15 @@ def deploy():
     print("Files uploaded successfully.")
 
     # Create vercel deployment
-    env = json.dumps({
-        "VERCEL_AUTH_TOKEN": body['connections']['vercel_auth_token'],
-        "GITHUB_ACCESS_TOKEN": body['connections']['github_access_token']
-    })
     resp = requests.post(
         f"https://api.vercel.com/v13/deployments",
         json={
             "name": safe_repo_name,
             "framework": None,
-            "env": env,
+            "env": {
+                "VERCEL_AUTH_TOKEN": body['connections']['vercel_auth_token'],
+                "GITHUB_ACCESS_TOKEN": body['connections']['github_access_token']
+            },
             "gitSource": {
                 "org": username,
                 "ref": "master",
