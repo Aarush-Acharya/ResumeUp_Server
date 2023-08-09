@@ -119,7 +119,8 @@ def deploy():
         os.system(f"rm -rf /tmp/{safe_repo_name}")
 
     username = body["widgets"]["contactme"]["github_username"]
-    access_token = body["connections"]["github_access_token"]
+    github_access_token = body["connections"]["github_access_token"]
+    vercel_auth_token = body["connections"]["vercel_auth_token"]
 
     context = {
         "project_name": safe_repo_name,
@@ -151,7 +152,7 @@ def deploy():
     local_repo = Repo.init(output_dir)
     remote = local_repo.create_remote(
         "origin",
-        f"https://{username}:{access_token}@github.com/{username}/{safe_repo_name}",
+        f"https://{username}:{github_access_token}@github.com/{username}/{safe_repo_name}",
     )
 
     local_repo.git.add(".")
@@ -162,33 +163,48 @@ def deploy():
 
     vercel_headers = {
         "Accept": "application/json",
-        "Authorization": f"Bearer {body['connections']['vercel_auth_token']}",
+        "Authorization": f"Bearer {vercel_auth_token}",
     }
+
+    resp = requests.post(
+        "https://api.vercel.com/v9/projects",
+        json={
+            "name": safe_repo_name,
+            "buildCommand": "flutter/bin/flutter build web --release --no-tree-shake-icons",
+            "outputDirectory": "build/web",
+            "environmentVariables": [
+                {
+                    "key": "GITHUB_ACCESS_TOKEN",
+                    "target": "production",
+                    "value": github_access_token,
+                    "type": "plain",
+                },
+                {
+                    "key": "VERCEL_AUTH_TOKEN",
+                    "target": "production",
+                    "value": vercel_auth_token,
+                    "type": "plain",
+                },
+            ],
+            "installCommand": "if cd flutter; then git pull && cd .. ; else git clone https://github.com/flutter/flutter.git; fi && ls && flutter/bin/flutter doctor && flutter/bin/flutter clean && flutter/bin/flutter config --enable-web",
+        },
+        headers=vercel_headers,
+    )
+
+    if not resp.status_code == 200:
+        print(resp.json())
+        return jsonify({"status": False, "error": "failed to create vercel profject"})
 
     # Create vercel deployment
     resp = requests.post(
         f"https://api.vercel.com/v13/deployments",
         json={
             "name": safe_repo_name,
-            "framework": None,
-            "build": {
-                "env": {
-                    "VERCEL_AUTH_TOKEN": body["connections"]["vercel_auth_token"],
-                    "GITHUB_ACCESS_TOKEN": body["connections"]["github_access_token"],
-                },
-            },
             "gitSource": {
                 "org": username,
                 "ref": "master",
-                "repo": f"{safe_repo_name}",
+                "repo": safe_repo_name,
                 "type": "github",
-            },
-            "projectSettings": {
-                "framework": None,
-                "rootDirectory": None,
-                "buildCommand": "flutter/bin/flutter build web --release --no-tree-shake-icons",
-                "outputDirectory": "build/web",
-                "installCommand": "if cd flutter; then git pull && cd .. ; else git clone https://github.com/flutter/flutter.git; fi && ls && flutter/bin/flutter doctor && flutter/bin/flutter clean && flutter/bin/flutter config --enable-web",
             },
         },
         headers=vercel_headers,
@@ -199,33 +215,6 @@ def deploy():
         return jsonify({"status": False, "error": "failed to create deployment"})
 
     print("Done creating deployment!")
-
-    parsed = resp.json()
-    project_id = parsed["projectId"]
-    resp = requests.post(
-        f"https://api.vercel.com/v10/projects/{project_id}/env?upsert=true",
-        json=[
-            {
-                "key": "VERCEL_AUTH_TOKEN",
-                "value": body["connections"]["vercel_auth_token"],
-                "type": "plain",
-                "target": ["production", "preview"],
-            },
-            {
-                "key": "GITHUB_ACCESS_TOKEN",
-                "value": access_token,
-                "type": "plain",
-                "target": ["production", "preview"],
-            },
-        ],
-        headers=vercel_headers,
-    )
-
-    if not resp.status_code == 201:
-        print(resp.json())
-        return jsonify({"status": False, "error": "failed to add env variables"})
-
-    print("Added env variables")
 
     return jsonify(
         {
