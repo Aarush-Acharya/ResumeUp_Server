@@ -129,8 +129,8 @@ def deploy():
         "is_profile_active": body["widgets"]["avatar"],
         "is_github_activity_active": body["widgets"]["github_activity"],
         "is_github_chart_active": body["widgets"]["github_chart"],
-        "twitter_uname": body["widgets"]["twitter_username"],
-        "linkedIn_uname": body["widgets"]["linkedin_username"],
+        "twitter_uname": body["widgets"]["contactme"]["twitter_username"],
+        "linkedIn_uname": body["widgets"]["contactme"]["linkedin_username"]
     }
     output_dir = cookiecutter(
         TEMPLATE_REPO_LINK, no_input=True, extra_context=context, output_dir="/tmp"
